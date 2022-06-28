@@ -69,8 +69,9 @@ int main(void)
   MX_GPIO_Init();
 
   TaskCreation();
+  RtosStart();
 
-  // while (1);
+   while (1);
 }
    
 /**
