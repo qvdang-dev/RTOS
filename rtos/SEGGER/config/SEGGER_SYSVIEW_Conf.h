@@ -67,12 +67,17 @@ Additional information:
 #ifndef SEGGER_SYSVIEW_CONF_H
 #define SEGGER_SYSVIEW_CONF_H
 
-#define SEGGER_UART_REC 1
+/*********************************************************************
+*
+*       Defines, configurable
+*
+**********************************************************************
+*/
 
-#if (SEGGER_UART_REC == 1)
-    extern void HIF_UART_EnableTXEInterrupt (void);
-    #define SEGGER_SYSVIEW_ON_EVENT_RECORDED(x) HIF_UART_EnableTXEInterrupt
-#endif
+/*********************************************************************
+* TODO: Add your defines here.                                       *
+**********************************************************************
+*/
 
 
 #endif  // SEGGER_SYSVIEW_CONF_H

@@ -125,9 +125,6 @@ standard names. */
 #define xPortPendSVHandler PendSV_Handler
 #define xPortSysTickHandler SysTick_Handler
 
-#include "SEGGER_SYSVIEW_FreeRTOS.h"
-#define	INCLUDE_xTaskGetIdleTaskHandle 1
-#define INCLUDE_pxTaskGetStackStart	1
-
+// #include "SEGGER_SYSVIEW_FreeRTOS.h"
 #endif /* FREERTOS_CONFIG_H */
 
