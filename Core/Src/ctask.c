@@ -15,9 +15,9 @@ void GreenTask()
     while(1)
     {
         LedOn(LED_GREEN);
-        vTaskDelay(2000/ portTICK_RATE_MS);
+        vTaskDelay(10/ portTICK_RATE_MS);
         LedOff(LED_GREEN);
-        vTaskDelay(2000/ portTICK_RATE_MS);
+        vTaskDelay(10/ portTICK_RATE_MS);
     }
 }
 
@@ -26,9 +26,9 @@ void BlueTask()
     while(1)
     {
         LedOn(LED_BLUE);
-        vTaskDelay(1000/ portTICK_RATE_MS);
+        vTaskDelay(50/ portTICK_RATE_MS);
         LedOff(LED_BLUE);
-        vTaskDelay(1000/ portTICK_RATE_MS);
+        vTaskDelay(50/ portTICK_RATE_MS);
     }
 }
 
@@ -52,7 +52,7 @@ void TaskCreation()
     val = xTaskCreate(BlueTask, "BlueTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 2, &BlueTaskHandler);
     assert_param(val == pdPASS);
     
-    val = xTaskCreate(RedTask, "RedTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 3, &BlueTaskHandler);
+    val = xTaskCreate(RedTask, "RedTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 3, &RedTaskHandler);
     assert_param(val == pdPASS);
 }
 
@@ -79,9 +79,9 @@ void TasKDelete(uint8_t taskname)
 
 void RtosStart()
 {
-#if defined(HAS_SEGGER_SYSVIEW)
+    SEGGER_UART_init(115200);
+
     SEGGER_SYSVIEW_Conf();
-    SEGGER_SYSVIEW_Start();
-#endif
+    // SEGGER_SYSVIEW_Start();
     vTaskStartScheduler();
 }
