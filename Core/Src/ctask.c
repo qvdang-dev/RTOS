@@ -49,7 +49,7 @@ void BlueTask()
             LedOff(LED_GREEN);
             LedOn(LED_BLUE);
             vTaskDelay(2000/portTICK_PERIOD_MS);
-            // xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
+            xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
         }
 
     }
