@@ -1,3 +1,5 @@
+"./Core/Src/cled/cled.o"
+"./Core/Src/ctask.o"
 "./Core/Src/main.o"
 "./Core/Src/stm32f4xx_hal_msp.o"
 "./Core/Src/stm32f4xx_hal_timebase_tim.o"
@@ -37,3 +39,4 @@
 "./rtos/SEGGER/SEGGER/SEGGER_SYSVIEW.o"
 "./rtos/SEGGER/SEGGER/Syscalls/SEGGER_RTT_Syscalls_GCC.o"
 "./rtos/SEGGER/config/SEGGER_SYSVIEW_Config_FreeRTOS.o"
+"./rtos/SEGGER/rec/segger_uart.o"

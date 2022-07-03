@@ -1,27 +1,17 @@
 #include "ctask.h"
-#include "semphr.h"
 #include "cled.h"
 #include "SEGGER_SYSVIEW.h"
-
-
-#define STACK_SIZE 128
-
-#define HAS_SEGGER_SYSVIEW
 
 TaskHandle_t IdleHandler;
 TaskHandle_t GreenTaskHandler;
 TaskHandle_t BlueTaskHandler;
 TaskHandle_t RedTaskHandler;
+TaskHandle_t OrangeTaskHandler;
 
-enum SEMA
-{
-    SEMA_GREEN_LED_EVENT = 0,
-    SEMA_BLUE_LED_EVENT,
-    SEMA_RED_LED_EVENT,
-    SEMA_NUM
-};
+TimerHandle_t Timer_Orange;
 
 xSemaphoreHandle eSemaList[SEMA_NUM];
+
 
 void GreenTask()
 {
@@ -33,6 +23,7 @@ void GreenTask()
             LedOff(LED_BLUE);
             LedOn(LED_GREEN);
             vTaskDelay(2000/portTICK_PERIOD_MS);
+            xTimerStart(Timer_Orange , ms(5000));
             xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
         }
 
@@ -50,8 +41,7 @@ void BlueTask()
             LedOn(LED_BLUE);
             vTaskDelay(2000/portTICK_PERIOD_MS);
             xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
-        }
-
+        }  
     }
 }
 
@@ -69,6 +59,27 @@ void RedTask()
             xSemaphoreGive(eSemaList[SEMA_BLUE_LED_EVENT]);
         }
 
+    }
+}
+
+void OrangeTask()
+{
+    static unsigned char count = 0;
+    while (1)
+    {
+        if (xSemaphoreTake(eSemaList[SEMA_ORANGE_LED_EVENT], portMAX_DELAY) == pdPASS)
+        {
+            if (count == 0)
+            {
+                LedOn(LED_ORANGE);
+                count++;
+            }
+            else
+            {
+                LedOff(LED_ORANGE);
+                count = 0;
+            }
+        }
     }
 }
 
@@ -103,6 +114,9 @@ void TaskCreation()
     
     val = xTaskCreate(RedTask, "RedTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 3, &RedTaskHandler);
     assert_param(val == pdPASS);
+
+    val = xTaskCreate(OrangeTask, "OrangeTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 4, &OrangeTaskHandler);
+    assert_param(val == pdPASS);
 }
 
 void TasKDelete(uint8_t taskname)
@@ -121,6 +135,10 @@ void TasKDelete(uint8_t taskname)
             vTaskDelete(RedTaskHandler);
             break;
 
+        case Orange:
+            vTaskDelete(OrangeTaskHandler);
+            break;
+
         default:
             break;
     }
@@ -128,11 +146,15 @@ void TasKDelete(uint8_t taskname)
 
 void RtosStart()
 {
-    SEGGER_UART_init(115200);
-
-    SEGGER_SYSVIEW_Conf();
+    // SEGGER_UART_init(115200);
+    // SEGGER_SYSVIEW_Conf();
     // SEGGER_SYSVIEW_Start();
+
     RtosCreateSema();
+
+    Timer_Orange = xTimerCreate("TimerOrange", ms(100), pdFAIL, NULL, TimerCallback_Orange);
+    assert_param(Timer_Orange != NULL);
+
     vTaskStartScheduler();
 
 }
@@ -143,4 +165,9 @@ void RtosCreateSema()
     {
         eSemaList[i] = xSemaphoreCreateBinary();
     }
+}
+
+void TimerCallback_Orange(TimerHandle_t Timer)
+{
+    xSemaphoreGive(eSemaList[SEMA_ORANGE_LED_EVENT]);
 }

@@ -1,3 +1,4 @@
+#pragma once
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
@@ -17,8 +18,8 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
 #include "ctask.h"
+#include "main.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */

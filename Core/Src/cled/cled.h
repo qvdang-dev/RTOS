@@ -8,6 +8,7 @@ enum LED
     LED_GREEN = 0,
     LED_BLUE,
     LED_RED,
+    LED_ORANGE,
 
     LED_NUM
 };
