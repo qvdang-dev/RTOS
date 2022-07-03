@@ -19,3 +19,5 @@ void RedTask();
 void TaskCreation();
 void TaskDelete(uint8_t taskname);
 void RtosStart();
+void RtosCreateSema();
+void Idle();
