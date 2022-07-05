@@ -7,6 +7,7 @@
 #include "stm32f4xx_hal.h"
 #include "semphr.h"
 #include "timers.h"
+#include "queue.h"
 
 
 
@@ -32,6 +33,27 @@ enum SEMA
     SEMA_ORANGE_LED_EVENT,
     SEMA_NUM
 };
+
+typedef enum LED_CMD
+{
+    LED_GREEN_ON = 0,
+    LED_GREEN_OFF,
+    LED_BLUE_ON,
+    LED_BLUE_OFF,
+    LED_RED_ON,
+    LED_RED_OFF,
+    LED_ORANGE_ON,
+    LED_ORANGE_OFF,
+    LED_CMD_NUM
+}LED_CMD;
+
+typedef struct led_msg
+{
+    unsigned char len;
+    unsigned int time;
+    LED_CMD cmd;
+
+}led_msg;
 
 void GreenTask();
 void BlueTask();
