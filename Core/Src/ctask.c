@@ -10,6 +10,8 @@ TaskHandle_t OrangeTaskHandler;
 
 TimerHandle_t Timer_Orange;
 
+QueueHandle_t Queue_led;
+
 xSemaphoreHandle eSemaList[SEMA_NUM];
 
 
@@ -19,11 +21,18 @@ void GreenTask()
     {
         if (xSemaphoreTake(eSemaList[SEMA_GREEN_LED_EVENT], portMAX_DELAY) == pdPASS)
         {
-            LedOff(LED_RED);
-            LedOff(LED_BLUE);
-            LedOn(LED_GREEN);
-            vTaskDelay(2000/portTICK_PERIOD_MS);
-            xTimerStart(Timer_Orange , ms(5000));
+            led_msg msg;
+            msg.len = 1;
+
+            msg.time = 0;
+            msg.cmd = LED_RED_OFF;
+            xQueueSend(Queue_led, &msg, ms(10));
+            msg.cmd = LED_BLUE_OFF;
+            xQueueSend(Queue_led, &msg, ms(10));
+
+            msg.time = 1000;
+            msg.cmd = LED_GREEN_ON;
+            xQueueSend(Queue_led, &msg, ms(10));
             xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
         }
 
@@ -36,10 +45,18 @@ void BlueTask()
     {
         if (xSemaphoreTake(eSemaList[SEMA_BLUE_LED_EVENT],portMAX_DELAY) == pdPASS)
         {
-            LedOff(LED_RED);
-            LedOff(LED_GREEN);
-            LedOn(LED_BLUE);
-            vTaskDelay(2000/portTICK_PERIOD_MS);
+            led_msg msg;
+            msg.len = 1;
+
+            msg.time = 0;
+            msg.cmd = LED_RED_OFF;
+            xQueueSend(Queue_led, &msg, ms(10));
+            msg.cmd = LED_GREEN_OFF;
+            xQueueSend(Queue_led, &msg, ms(10));
+
+            msg.time = 1000;
+            msg.cmd = LED_BLUE_ON;
+            xQueueSend(Queue_led, &msg, ms(10));
             xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
         }  
     }
@@ -52,10 +69,18 @@ void RedTask()
     {
         if (xSemaphoreTake(eSemaList[SEMA_RED_LED_EVENT], portMAX_DELAY) == pdPASS)
         {
-            LedOff(LED_BLUE);
-            LedOff(LED_GREEN);
-            LedOn(LED_RED);
-            vTaskDelay(2000/portTICK_PERIOD_MS);
+            led_msg msg;
+            msg.len = 1;
+
+            msg.time = 0;
+            msg.cmd = LED_BLUE_OFF;
+            xQueueSend(Queue_led, &msg, ms(10));
+            msg.cmd = LED_GREEN_OFF;
+            xQueueSend(Queue_led, &msg, ms(10));
+
+            msg.time = 1000;
+            msg.cmd = LED_RED_ON;
+            xQueueSend(Queue_led, &msg, ms(10));
             xSemaphoreGive(eSemaList[SEMA_BLUE_LED_EVENT]);
         }
 
@@ -67,18 +92,39 @@ void OrangeTask()
     static unsigned char count = 0;
     while (1)
     {
-        if (xSemaphoreTake(eSemaList[SEMA_ORANGE_LED_EVENT], portMAX_DELAY) == pdPASS)
+        led_msg msg;
+        if( xQueueReceive(Queue_led, &msg, ms(10)) == pdPASS)
         {
-            if (count == 0)
+            switch (msg.cmd)
             {
-                LedOn(LED_ORANGE);
-                count++;
+                case LED_GREEN_ON:
+                    LedOn(LED_GREEN);
+                    break;
+
+                case LED_BLUE_ON:
+                    LedOn(LED_BLUE);
+                    break;
+
+                case LED_RED_ON:
+                    LedOn(LED_RED);
+                    break;
+
+                case LED_GREEN_OFF:
+                    LedOff(LED_GREEN);
+                    break;
+
+                case LED_BLUE_OFF:
+                    LedOff(LED_BLUE);
+                    break;
+
+                case LED_RED_OFF:
+                    LedOff(LED_RED);
+                    break;
+
+                default:
+                    break;
             }
-            else
-            {
-                LedOff(LED_ORANGE);
-                count = 0;
-            }
+            vTaskDelay(ms(msg.time));
         }
     }
 }
@@ -154,6 +200,9 @@ void RtosStart()
 
     Timer_Orange = xTimerCreate("TimerOrange", ms(100), pdFAIL, NULL, TimerCallback_Orange);
     assert_param(Timer_Orange != NULL);
+
+    Queue_led = xQueueCreate(10, sizeof(led_msg));
+    assert_param(Queue_led != NULL);
 
     vTaskStartScheduler();
 
