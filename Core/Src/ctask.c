@@ -1,5 +1,8 @@
 #include "ctask.h"
 #include "cled.h"
+#include "cuart.h"
+#include "stm32f4xx_hal.h"
+
 #include "SEGGER_SYSVIEW.h"
 
 TaskHandle_t IdleHandler;
@@ -8,12 +11,17 @@ TaskHandle_t BlueTaskHandler;
 TaskHandle_t RedTaskHandler;
 TaskHandle_t OrangeTaskHandler;
 
+TaskHandle_t Uart_ReceiveTask;
+TaskHandle_t OrangeTaskHandler;
+
 TimerHandle_t Timer_Orange;
 
 QueueHandle_t Queue_led;
+QueueHandle_t Queue_UartReceive;
 
 xSemaphoreHandle eSemaList[SEMA_NUM];
 
+volatile unsigned char uart_rx_flag = 0;
 
 void GreenTask()
 {
@@ -33,7 +41,7 @@ void GreenTask()
             msg.time = 1000;
             msg.cmd = LED_GREEN_ON;
             xQueueSend(Queue_led, &msg, ms(10));
-            xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
+            // xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
         }
 
    }
@@ -57,7 +65,7 @@ void BlueTask()
             msg.time = 1000;
             msg.cmd = LED_BLUE_ON;
             xQueueSend(Queue_led, &msg, ms(10));
-            xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
+            // xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
         }  
     }
 }
@@ -81,7 +89,7 @@ void RedTask()
             msg.time = 1000;
             msg.cmd = LED_RED_ON;
             xQueueSend(Queue_led, &msg, ms(10));
-            xSemaphoreGive(eSemaList[SEMA_BLUE_LED_EVENT]);
+            // xSemaphoreGive(eSemaList[SEMA_BLUE_LED_EVENT]);
         }
 
     }
@@ -124,7 +132,7 @@ void OrangeTask()
                 default:
                     break;
             }
-            vTaskDelay(ms(msg.time));
+            // vTaskDelay(ms(msg.time));
         }
     }
 }
@@ -139,11 +147,36 @@ void Idle()
             LedOff(LED_RED);
             LedOff(LED_GREEN);
             LedOff(LED_BLUE);
-            xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
+            // xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
             val = 1;
         }
-    }
+    } 
 
+}
+
+void TaskUartReveive()
+{
+    char buff;
+    uart_init(USART2, 9600);
+    while (1)
+    {
+        xQueueReceive(Queue_UartReceive, &buff, portMAX_DELAY);
+        switch (buff)
+        {
+            case 'g':
+                xSemaphoreGive(eSemaList[SEMA_GREEN_LED_EVENT]);
+                break;
+            case 'b':
+                xSemaphoreGive(eSemaList[SEMA_BLUE_LED_EVENT]);
+                break;
+            case 'r':
+                xSemaphoreGive(eSemaList[SEMA_RED_LED_EVENT]);
+                break;
+            default:
+                break;
+        }
+
+    }
 }
 
 void TaskCreation()
@@ -163,7 +196,11 @@ void TaskCreation()
 
     val = xTaskCreate(OrangeTask, "OrangeTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 4, &OrangeTaskHandler);
     assert_param(val == pdPASS);
+
+    val = xTaskCreate(TaskUartReveive, "UartReceiveTask", STACK_SIZE, NULL,tskIDLE_PRIORITY + 5, &Uart_ReceiveTask);
+    assert_param(val == pdPASS);
 }
+
 
 void TasKDelete(uint8_t taskname)
 {
@@ -192,16 +229,15 @@ void TasKDelete(uint8_t taskname)
 
 void RtosStart()
 {
-    // SEGGER_UART_init(115200);
-    // SEGGER_SYSVIEW_Conf();
-    // SEGGER_SYSVIEW_Start();
-
     RtosCreateSema();
 
     Timer_Orange = xTimerCreate("TimerOrange", ms(100), pdFAIL, NULL, TimerCallback_Orange);
     assert_param(Timer_Orange != NULL);
 
     Queue_led = xQueueCreate(10, sizeof(led_msg));
+    assert_param(Queue_led != NULL);
+
+    Queue_UartReceive = xQueueCreate(10, sizeof(char));
     assert_param(Queue_led != NULL);
 
     vTaskStartScheduler();
@@ -219,4 +255,10 @@ void RtosCreateSema()
 void TimerCallback_Orange(TimerHandle_t Timer)
 {
     xSemaphoreGive(eSemaList[SEMA_ORANGE_LED_EVENT]);
+}
+
+void USART2_IRQ_msg(char buff)
+{
+    portBASE_TYPE val = pdFALSE;
+    xQueueSendFromISR(Queue_UartReceive, &buff, &val);
 }

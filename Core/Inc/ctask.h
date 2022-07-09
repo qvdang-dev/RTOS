@@ -66,7 +66,11 @@ void TaskDelete(uint8_t taskname);
 void RtosStart();
 void RtosCreateSema();
 void Idle();
+void TaskUartReveive();
 
 void TimerCallback_Orange(TimerHandle_t timer);
+void USART2_IRQ_msg(char buff);
+
+void task_switching(int task_id);
 
 #endif // end CTASK_FILE
